@@ -1,0 +1,13 @@
+{
+  "is_validated": "True",
+  "type_validated": null,
+  "organization_validated": null,
+  "sector_validated__in": null,
+  "per_component_validated__in": "32,34,35",
+  "appeal_code": null,
+  "appeal_code__num_beneficiaries__gte": null,
+  "appeal_code__start_date__gte": null,
+  "appeal_code__dtype__in": null,
+  "appeal_code__country__in": null,
+  "appeal_code__region": "1"
+}
