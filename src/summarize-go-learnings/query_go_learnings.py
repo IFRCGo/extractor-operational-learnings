@@ -6,14 +6,13 @@ import sys
 import io
 
 
-def main(go_authorization_token_path, output_file_path, request_filter_path):
+def main(output_file_path, request_filter_path):
     
     '''
     The query go learnings function orchestrates the process of fetching filtered learning data from the GoAdmin API 
-    and exporting it to a CSV file. It accepts paths to authorization token, output file, and request filter as input parameters.
+    and exporting it to a CSV file. It accepts paths to output file, and request filter as input parameters.
     
     Parameters:
-    - go_authorization_token_path: Path to the JSON file containing the GoAdmin authorization token.
     - output_file_path: Path where the fetched data will be exported as a CSV file.
     - request_filter_path: Path to the JSON file containing the request filter parameters.
 
@@ -22,9 +21,7 @@ def main(go_authorization_token_path, output_file_path, request_filter_path):
     The function expects certain keys to be present in the request filter dictionary.
     The filtering criteria are applied to fetch a filtered version of the learning data from the GoAdmin API.
     '''
-    
-    with open(go_authorization_token_path) as json_file:
-        go_authorization_token = json.load(json_file)
+
     
     with open(request_filter_path) as json_file:
         request_filter = json.load(json_file)
@@ -43,16 +40,16 @@ def main(go_authorization_token_path, output_file_path, request_filter_path):
         return url
     
     
-    def fetch_filtered_learnings_csvexport(request_filter, go_authorization_token):
+    def fetch_filtered_learnings_csvexport(request_filter):
         url = build_filtered_learning_url(request_filter)
         try:
-            length = requests.get(url, headers = go_authorization_token).json()['count']
-            r = requests.get(url+'&format=csv', headers = go_authorization_token)
+            length = requests.get(url).json()['count']
+            r = requests.get(url+'&format=csv')
             go_field = pd.read_csv(io.StringIO(r.content.decode('utf8')))
 
             for i in range(1,int(np.ceil(length/200))):
                 start_offset = i*limit
-                r = requests.get(url+'&format=csv'+'&offset='+str(start_offset), headers = go_authorization_token)
+                r = requests.get(url+'&format=csv'+'&offset='+str(start_offset))
                 go_field = pd.concat([go_field, pd.read_csv(io.StringIO(r.content.decode('utf8')))])
             return go_field
     
@@ -68,17 +65,16 @@ def main(go_authorization_token_path, output_file_path, request_filter_path):
             # Catch any other unexpected exceptions
             print("Unexpected exception:", e)
             
-    df = fetch_filtered_learnings_csvexport(request_filter,go_authorization_token)
+    df = fetch_filtered_learnings_csvexport(request_filter)
     
     if not df.empty:
         df.to_csv(output_file_path,encoding = 'utf-8')
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python query_go_learnings.py go_authorization_token_path output_path request_filter_path")
+    if len(sys.argv) != 3:
+        print("Usage: python query_go_learnings.py output_path request_filter_path")
     else:
-        go_authorization_token_path = sys.argv[1]
-        output_file_path_arg = sys.argv[2]
-        request_filter_path = sys.argv[3]
-        main(go_authorization_token_path, output_file_path_arg,request_filter_path)
+        output_file_path_arg = sys.argv[1]
+        request_filter_path = sys.argv[2]
+        main(output_file_path_arg,request_filter_path)
