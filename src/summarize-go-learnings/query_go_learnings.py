@@ -68,6 +68,7 @@ def main(output_file_path, request_filter_path):
     df = fetch_filtered_learnings_csvexport(request_filter)
     
     if not df.empty:
+        df.set_index('id', inplace = True)
         df.to_csv(output_file_path,encoding = 'utf-8')
 
 
