@@ -26,7 +26,7 @@ def main(output_file_path, request_filter_path):
     with open(request_filter_path) as json_file:
         request_filter = json.load(json_file)
     
-    def build_filtered_learning_url(request_filter):
+    def build_filtered_learning_url(request_filter, limit = 200):
         url_base = 'https://goadmin.ifrc.org/api/v2/ops-learning/?'
     
         empty_keys = [key for key, value in request_filter.items() if not value]
@@ -36,18 +36,18 @@ def main(output_file_path, request_filter_path):
         for arg in request_filter:
             url_base = url_base + arg + '=' + request_filter[arg] + '&'
 
-        url = url_base + 'limit=200'
+        url = url_base + 'limit=' + str(limit)
         return url
     
     
-    def fetch_filtered_learnings_csvexport(request_filter):
-        url = build_filtered_learning_url(request_filter)
+    def fetch_filtered_learnings_csvexport(request_filter, limit = 200):
+        url = build_filtered_learning_url(request_filter, limit)
         try:
             length = requests.get(url).json()['count']
             r = requests.get(url+'&format=csv')
             go_field = pd.read_csv(io.StringIO(r.content.decode('utf8')))
 
-            for i in range(1,int(np.ceil(length/200))):
+            for i in range(1,int(np.ceil(length/limit))):
                 start_offset = i*limit
                 r = requests.get(url+'&format=csv'+'&offset='+str(start_offset))
                 go_field = pd.concat([go_field, pd.read_csv(io.StringIO(r.content.decode('utf8')))])
