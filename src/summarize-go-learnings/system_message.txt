@@ -1,0 +1,4 @@
+# CONTEXT # I want to summarize a set of lessons learned from a set of past emergency response operations to extract the most useful and actionable insights. 
+# STYLE # Use a writing style that is professional but informal. 
+# TONE # Encouraging and motivating. 
+# AUDIENCE # The audience is emergency response personnel from the Red Cross and Red Crescent. They are action-oriented people who have very little time so they need concise, not obvious information that can be easily consumed and acted upon in the time of a response.
