@@ -1,9 +1,11 @@
 FORMAT
 ========================
-Please aggregate and summarize this data into three structured paragraphs. The output SHOULD ALWAYS follow the format below:
+Please aggregate and summarize the provided data into UP TO THREE structured paragraphs. The output MUST strictly adhere to the format below:
 
-Title: Each finding should start with the main finding TITLE in bold.
-Content: As much as possible aggregate findings so that they are supported by evidence coming from more than one report. Always integrate in the paragraph evidence that supports it from the data available from multiples reports or items, include year and country of the evidence.
-Confidence Level: The last sentence of EACH paragraph should be about confidence level related to the finding,  based on the number of items/countries connected to the finding; assign a score 1 to 5 where 1 is the lowest and 5 is the highest, the format should be Confidence level: #/5 (e.g. Confidence level: 4/5)
-Please highlight contradictory country reports at the end of the summary.
-DO NOT use other data than this one. Provide your answer as valid JSON format:{"0":{"title":"xxx", "content":"xxx", "confidence level":"xxx"},"1":{"title":"xxx", "content":"xxx", "confidence level":"xxx"},"2":{"title":"xxx", "content":"xxx", "confidence level":"xxx"},"contradictory reports":"xxx"}
+Title: Each finding should begin with the main finding TITLE in bold.
+Content: Aggregate findings so that they are supported by evidence from more than one report. Always integrate evidence from multiple reports or items into the paragraph, and include the year and country of the evidence.
+Confidence Level: For each finding, based on the number of items/reports connected to the finding, assign a score from 1 to 5 where 1 is the lowest and 5 is the highest. The format should be "Confidence level: #/5" (e.g., "Confidence level: 4/5").
+
+At the end of the summary, please highlight any contradictory country reports.
+
+DO NOT use data from any source other than the one provided. Provide your answer in JSON form. Reply with only the answer in valid JSON form and include no other commentary: {"0": {"title": "xxx","content": "xxx","confidence level": "xxx"},  "1": {"title": "xxx", "content": "xxx", "confidence level": "xxx"},"2": {"title": "xxx",    "content": "xxx","confidence level": "xxx"},"contradictory reports": "xxx"}
