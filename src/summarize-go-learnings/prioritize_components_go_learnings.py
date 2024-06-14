@@ -5,6 +5,10 @@ import sys
 import logging
 
 
+MIN_DIF_COMPONENTS = 3 
+MIN_DIF_EXCERPTS = 3
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -28,7 +32,7 @@ def need_component_prioritization(df):
     """Determines if prioritization is needed based on unique components and learnings."""
     nb_dif_components = len(df['component'].unique())
     nb_dif_learnings = len(df['learning'].unique())
-    return nb_dif_components > 3 and nb_dif_learnings > 3
+    return nb_dif_components > MIN_DIF_COMPONENTS and nb_dif_learnings > MIN_DIF_EXCERPTS
 
 
 def identify_type_prioritization(df):
@@ -86,7 +90,11 @@ def prioritize(df, components_countries, components_regions, components_global, 
 def prioritize_components(filtered_learnings, components_countries_path, components_regions_path, components_global_path):
     """Reads input files, prioritizes components, and returns the prioritized DataFrame."""
     components_countries = read_json_file(components_countries_path)
+    components_countries = {item['country']: item['components'] for item in components_countries}
+
     components_regions = read_json_file(components_regions_path)
+    components_regions = {item['region']: item['components'] for item in components_regions}
+
     components_global = read_json_file(components_global_path)
 
     if need_component_prioritization(filtered_learnings):
@@ -94,11 +102,12 @@ def prioritize_components(filtered_learnings, components_countries_path, compone
         prioritized_learnings = prioritize(filtered_learnings, components_countries, components_regions, components_global, type_prioritization)
     else:
         prioritized_learnings = filtered_learnings
-
+    logging.info("Prioritization of components completed.")
     return prioritized_learnings
 
 
 def main(filtered_learnings, components_countries_path, components_regions_path, components_global_path):
+
     return prioritize_components(filtered_learnings, components_countries_path, components_regions_path, components_global_path)
 
 
