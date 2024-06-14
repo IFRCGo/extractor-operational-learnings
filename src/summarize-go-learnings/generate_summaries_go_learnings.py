@@ -7,9 +7,10 @@ from openai import AzureOpenAI
 import ast
 
 
-PROMPT_LENGTH_LIMIT = 6500
+PROMPT_LENGTH_LIMIT = 7500
 SYSTEM_MESSAGE_PATH = "system_message.txt"
 ENCODING_NAME = "cl100k_base"
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -61,17 +62,44 @@ def validate_length_prompt(messages, prompt_length_limit):
     return count <= prompt_length_limit
 
 
-def validate_format(summary):
+def validate_text_is_dictionary(text):
+    try:
+        formatted_text = ast.literal_eval(text)
+        return isinstance(formatted_text, dict)
+    except: 
+        return False 
+
+
+def modify_format(summary):
+    try:
+        # Find the index of the last closing brace before the "Note"
+        end_index = summary.rfind('}')
+
+        # Truncate the string to include only the dictionary part
+        formatted_summary = summary[:end_index+1]
+
+        logging.info("Modification realized to response")
+        return formatted_summary
+
+    except Exception as e:
+        logging.error(f"Modification failed: {e}")
+        return "{}"
+
+
+def validate_format(summary, output_file_path):
     try:
         # Attempt to parse the summary as a dictionary
-        formatted_summary = ast.literal_eval(summary)
-        if isinstance(formatted_summary, dict):
+        if validate_text_is_dictionary(summary):
             logging.info("Summary is a valid dictionary")
-
-            return formatted_summary
+            save_as_json(ast.literal_eval(summary), output_file_path)
         else:
-            logging.error("Summary is not a valid dictionary")
-            return None
+            formatted_summary = modify_format(summary)
+            if validate_text_is_dictionary(formatted_summary):
+                logging.info("Summary is a valid dictionary")
+                save_as_json(ast.literal_eval(formatted_summary), output_file_path)
+            else:
+                logging.error("Summary is not a valid dictionary")
+                save_as_json("{}", output_file_path)
     except (ValueError, SyntaxError) as e:
         # Log the error if the summary is not valid
         logging.error(f"Summary is not a valid dictionary: {e}")
@@ -82,7 +110,7 @@ def validate_format(summary):
         return None
 
 
-def summarize(system_message, prompt):
+def summarize(prompt, system_message = "You are a helpful assistant"):
     """Summarizes the prompt using the provided system message."""
     messages = [
         {"role": "system", "content": system_message},
@@ -97,10 +125,10 @@ def summarize(system_message, prompt):
     try:
         response = client.chat.completions.create(
             model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-            messages=messages
+            messages=messages,
+            temperature=0.7
         )
         summary = response.choices[0].message.content
-
         return summary
     except Exception as e:
         logging.error(f"Error in summarizing: {e}")
@@ -111,9 +139,9 @@ def generate_summaries(prompt, output_file_path):
     """Generates summaries using the provided system message and prompt."""
     try:
         system_message = read_file(SYSTEM_MESSAGE_PATH)
-        summary = summarize(system_message, prompt)
-        summary = validate_format(summary)
-        save_as_json(summary, output_file_path)
+        summary = summarize(prompt,system_message)
+        validate_format(summary, output_file_path)
+        
     except Exception as e:
         logging.error(f"Error in generating summaries: {e}")
         raise
