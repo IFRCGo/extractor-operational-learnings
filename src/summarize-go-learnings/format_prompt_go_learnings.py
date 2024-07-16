@@ -84,7 +84,9 @@ def get_main_sectors(df):
 
 
 def get_main_components(df):
-    available_components= list(df['component'].unique())
+    """Get information from components differents to the technical sectorial information"""
+    temp = df[df['component']!='NS-specific areas of intervention']
+    available_components= list(temp['component'].unique())
     nb_components= len(available_components)
     if nb_components == 0:
         logging.info("There were not specific components")
