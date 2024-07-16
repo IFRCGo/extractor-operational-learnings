@@ -126,7 +126,7 @@ def summarize(prompt, system_message = "You are a helpful assistant"):
         response = client.chat.completions.create(
             model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
             messages=messages,
-            temperature=0.7
+            temperature=0
         )
         summary = response.choices[0].message.content
         return summary
