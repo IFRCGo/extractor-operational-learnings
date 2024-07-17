@@ -26,8 +26,8 @@ client = AzureOpenAI(
 def save_as_json(data, output_file_path):
     """Saves data as a JSON file."""
     try:
-        with open(output_file_path, 'w') as f:
-            json.dump(data, f, indent=4)
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
         logging.info(f"Data successfully saved to {output_file_path}")
     except Exception as e:
         logging.error(f"Error saving data to JSON file: {e}")
