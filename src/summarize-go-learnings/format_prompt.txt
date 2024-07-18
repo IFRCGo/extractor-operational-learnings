@@ -3,7 +3,7 @@ FORMAT
 Please aggregate and summarize the provided data into UP TO THREE structured paragraphs. The output MUST strictly adhere to the format below:
 
 Title: Each finding should begin with the main finding TITLE in bold.
-Content: Aggregate findings so that they are supported by evidence from more than one report. Always integrate evidence from multiple reports or items into the paragraph, and include the year and country of the evidence.
+Content: Aggregate findings so that they are supported by evidence from more than one report. Always integrate evidence from multiple reports or items into the paragraph, and include the year and country of the evidence. The length of each paragraph MUST be between 50 and 75 words.
 Confidence Level: For each finding, based on the number of items/reports connected to the finding, assign a score from 1 to 5 where 1 is the lowest and 5 is the highest. The format should be "Confidence level: #/5" (e.g., "Confidence level: 4/5").
 
 At the end of the summary, please highlight any contradictory country reports.
