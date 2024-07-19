@@ -28,6 +28,13 @@ def read_json_file(file_path):
         raise
 
 
+def validate_df_not_empty(df):
+    if df.empty:
+        logging.info("Source dataframe is empty")
+        return False
+    else:
+        return True
+    
 def need_component_prioritization(df):
     """Determines if prioritization is needed based on unique components and learnings."""
     nb_dif_components = len(df['component'].unique())
@@ -89,21 +96,25 @@ def prioritize(df, components_countries, components_regions, components_global, 
 
 def prioritize_components(filtered_learnings, components_countries_path, components_regions_path, components_global_path):
     """Reads input files, prioritizes components, and returns the prioritized DataFrame."""
-    components_countries = read_json_file(components_countries_path)
-    components_countries = {item['country']: item['components'] for item in components_countries}
+    
+    if validate_df_not_empty(filtered_learnings):
+        components_countries = read_json_file(components_countries_path)
+        components_countries = {item['country']: item['components'] for item in components_countries}
 
-    components_regions = read_json_file(components_regions_path)
-    components_regions = {item['region']: item['components'] for item in components_regions}
+        components_regions = read_json_file(components_regions_path)
+        components_regions = {item['region']: item['components'] for item in components_regions}
 
-    components_global = read_json_file(components_global_path)
+        components_global = read_json_file(components_global_path)
 
-    if need_component_prioritization(filtered_learnings):
-        type_prioritization = identify_type_prioritization(filtered_learnings)
-        prioritized_learnings = prioritize(filtered_learnings, components_countries, components_regions, components_global, type_prioritization)
+        if need_component_prioritization(filtered_learnings):
+            type_prioritization = identify_type_prioritization(filtered_learnings)
+            prioritized_learnings = prioritize(filtered_learnings, components_countries, components_regions, components_global, type_prioritization)
+        else:
+            prioritized_learnings = filtered_learnings
+        logging.info("Prioritization of components completed.")
+        return prioritized_learnings
     else:
-        prioritized_learnings = filtered_learnings
-    logging.info("Prioritization of components completed.")
-    return prioritized_learnings
+        return filtered_learnings
 
 
 def main(filtered_learnings, components_countries_path, components_regions_path, components_global_path):
