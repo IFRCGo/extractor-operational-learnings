@@ -13,6 +13,14 @@ ENCODING_NAME = "cl100k_base"
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 
+def validate_df_not_empty(df):
+    if df.empty:
+        logging.info("Source dataframe is empty")
+        return False
+    else:
+        return True
+    
+
 def remove_duplicates(df, type_prompt):
     """Remove duplicate rows based on the 'learning' and 'component' column."""
     if type_prompt == 'primary':
@@ -79,14 +87,17 @@ def prioritize_most_recent(df, type_prompt, limit=2000, encoding_name="cl100k_ba
 
 def prioritize_excerpts(contextualized_learnings, type_prompt):     
     """Main function to prioritize excerpts.""" 
-    prioritized_excerpts_learnings = prioritize_most_recent(
-        contextualized_learnings, 
-        type_prompt,
-        limit=PROMPT_DATA_LENGTH_LIMIT, 
-        encoding_name=ENCODING_NAME,
-    )
-    logging.info("Prioritization of learnings completed.")
-    return prioritized_excerpts_learnings
+    if validate_df_not_empty(contextualized_learnings):
+        prioritized_excerpts_learnings = prioritize_most_recent(
+            contextualized_learnings, 
+            type_prompt,
+            limit=PROMPT_DATA_LENGTH_LIMIT, 
+            encoding_name=ENCODING_NAME,
+        )
+        logging.info("Prioritization of learnings completed.")
+        return prioritized_excerpts_learnings
+    else:
+        return contextualized_learnings
 
 
 def main(contextualized_learnings, type_prompt):
