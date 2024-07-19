@@ -40,6 +40,14 @@ def read_file(file_path):
         raise
 
 
+def validate_df_not_empty(df):
+    if df.empty:
+        logging.info("Source dataframe is empty")
+        return False
+    else:
+        return True
+
+
 def count_tokens(string, encoding_name):
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.get_encoding(encoding_name)
@@ -107,14 +115,14 @@ def get_learnings_component(component, df):
 def process_learnings_sector(sector,df, max_length_per_section):
     df = get_learnings_sector(sector, df).dropna()
     df_sliced = slice_dataframe(df, max_length_per_section, ENCODING_NAME)
-    learnings_sector = '\n----------------\n'+"SUBTYPE: " + sector+'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
+    learnings_sector = '\n----------------\n\n'+"TYPE: sector, "+"SUBTYPE: " + sector.lower() +'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
     return learnings_sector
 
 
 def process_learnings_component(component,df, max_length_per_section):
     df = get_learnings_component(component, df).dropna()
     df_sliced = slice_dataframe(df, max_length_per_section, ENCODING_NAME)
-    learnings_component = '\n----------------\n'+"SUBTYPE: " + component+'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
+    learnings_component = '\n----------------\n\n'+"TYPE: component, "+"SUBTYPE: " + component.lower() +'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
     return learnings_component
 
 
@@ -127,8 +135,18 @@ def process_data(type_prompt, df):
         sectors = get_main_sectors(df)
         components = get_main_components(df)
         max_length_per_section = PROMPT_DATA_LENGTH_LIMIT / (len(components)+len(sectors))
-        learnings_sectors = '\n----------------\n\n'+"TYPE: SECTORS"+'\n----------------\n'.join([process_learnings_sector(x,df, max_length_per_section) for x in sectors if pd.notna(x)])
-        learnings_components = '\n----------------\n\n'+"TYPE: COMPONENT"+'\n----------------\n'.join([process_learnings_component(x,df, max_length_per_section) for x in components if pd.notna(x)])
+        list_learnings_sectors = [process_learnings_sector(x,df, max_length_per_section) for x in sectors if pd.notna(x)]
+        list_learnings_components = [process_learnings_component(x,df, max_length_per_section) for x in components if pd.notna(x)]
+        if len(list_learnings_sectors) > 0:
+            learnings_sectors = '\n----------------\n\n'+"TYPE: SECTOR"+'\n----------------\n'.join(list_learnings_sectors)
+        else:
+            learnings_sectors = ""
+
+        if len(list_learnings_components) > 0:
+            learnings_components = '\n----------------\n\n'+"TYPE: COMPONENT"+'\n----------------\n'.join(list_learnings_components)
+        else:
+            learnings_components = ""
+            
         learnings_data = learnings_sectors + learnings_components
 
         return learnings_data
@@ -210,15 +228,18 @@ def create_prompt(prompt_intro, prompt_instruction, prompt_data, prompt_format):
 def format_prompt(request_filter_path, prioritized_learnings, type_prompt):
     """Formats the prompt based on request filter and prioritized learnings."""
 
-    request_filter = read_json_file(request_filter_path)
-    request_filter = process_request_filter(request_filter)
+    if validate_df_not_empty(prioritized_learnings):
+        request_filter = read_json_file(request_filter_path)
+        request_filter = process_request_filter(request_filter)
 
-    prompt_intro = build_intro_section()
-    prompt_instruction = build_instruction_section(request_filter, prioritized_learnings)
-    prompt_data = build_data_section(type_prompt, prioritized_learnings)
-    prompt_format = get_format_section(type_prompt)
+        prompt_intro = build_intro_section()
+        prompt_instruction = build_instruction_section(request_filter, prioritized_learnings)
+        prompt_data = build_data_section(type_prompt, prioritized_learnings)
+        prompt_format = get_format_section(type_prompt)
 
-    return create_prompt(prompt_intro, prompt_instruction, prompt_data, prompt_format)
+        return create_prompt(prompt_intro, prompt_instruction, prompt_data, prompt_format)
+    else:
+        return ''
 
 def main(request_filter_path, prioritized_learnings, type_prompt):
     """Main function to generate the prompt."""
