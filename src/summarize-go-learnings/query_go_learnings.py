@@ -26,6 +26,13 @@ def read_json_file(file_path):
         raise
 
 
+def validate_df_not_empty(df):
+    if df.empty:
+        logging.info("Source dataframe is empty")
+        return False
+    else:
+        return True
+
 def fetch_data_from_url(url):
     """Fetches data from a given URL and returns it as a DataFrame."""
     try:
@@ -74,8 +81,10 @@ def query(request_filter_path):
     try:
         request_filter = read_json_file(request_filter_path)
         df = fetch_filtered_learnings_csvexport(request_filter)
-        df.set_index('id', inplace=True)
-        logging.info("Data successfully fetched and returned as DataFrame.")
+
+        if validate_df_not_empty(df):
+            df.set_index('id', inplace=True)
+            logging.info("Data successfully fetched and returned as DataFrame.")
         return df
     except Exception as e:
         logging.error(f"Failed to query data: {e}")
