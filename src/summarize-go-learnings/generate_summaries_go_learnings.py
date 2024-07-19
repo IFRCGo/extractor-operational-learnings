@@ -15,13 +15,12 @@ ENCODING_NAME = "cl100k_base"
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-
 client = AzureOpenAI(
   azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT"), 
   api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
   api_version="2023-05-15"
 )
-
+    
 
 def save_as_json(data, output_file_path):
     """Saves data as a JSON file."""
@@ -47,6 +46,13 @@ def read_file(file_path):
         raise
 
 
+def validate_string_not_empty(str):
+    if not str:
+        logging.info("Source text is empty")
+        return False
+    else:
+        return True
+    
 def count_tokens(string, encoding_name):
     """Returns the number of tokens in a text string."""
     encoding = tiktoken.get_encoding(encoding_name)
@@ -89,17 +95,18 @@ def modify_format(summary):
 def validate_format(summary, output_file_path):
     try:
         # Attempt to parse the summary as a dictionary
-        if validate_text_is_dictionary(summary):
-            logging.info("Summary is a valid dictionary")
-            save_as_json(ast.literal_eval(summary), output_file_path)
-        else:
-            formatted_summary = modify_format(summary)
-            if validate_text_is_dictionary(formatted_summary):
+        if validate_string_not_empty(summary): 
+            if validate_text_is_dictionary(summary):
                 logging.info("Summary is a valid dictionary")
-                save_as_json(ast.literal_eval(formatted_summary), output_file_path)
+                save_as_json(ast.literal_eval(summary), output_file_path)
             else:
-                logging.error("Summary is not a valid dictionary")
-                save_as_json("{}", output_file_path)
+                formatted_summary = modify_format(summary)
+                if validate_text_is_dictionary(formatted_summary):
+                    logging.info("Summary is a valid dictionary")
+                    save_as_json(ast.literal_eval(formatted_summary), output_file_path)
+        else:
+            logging.error("Summary is not a valid dictionary")
+            save_as_json({}, output_file_path)
     except (ValueError, SyntaxError) as e:
         # Log the error if the summary is not valid
         logging.error(f"Summary is not a valid dictionary: {e}")
@@ -138,10 +145,12 @@ def summarize(prompt, system_message = "You are a helpful assistant"):
 def generate_summaries(prompt, output_file_path):
     """Generates summaries using the provided system message and prompt."""
     try:
-        system_message = read_file(SYSTEM_MESSAGE_PATH)
-        summary = summarize(prompt,system_message)
+        if validate_string_not_empty(prompt):
+            system_message = read_file(SYSTEM_MESSAGE_PATH)
+            summary = summarize(prompt,system_message)
+        else:
+            summary = None
         validate_format(summary, output_file_path)
-        
     except Exception as e:
         logging.error(f"Error in generating summaries: {e}")
         raise
