@@ -8,6 +8,13 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 
+def validate_df_not_empty(df):
+    if df.empty:
+        logging.info("Source dataframe is empty")
+        return False
+    else:
+        return True
+    
 def contextualize(prioritized_learnings):
     def add_contextualization(df):
         """Adds appeal year and event name as a contextualization of the leannings."""
@@ -18,9 +25,12 @@ def contextualize(prioritized_learnings):
         logging.info("Contextualization added to DataFrame.")
         return df
     
-    contextualized_learnings = add_contextualization(prioritized_learnings) 
-    logging.info("Contextualization of learnings completed.")   
-    return contextualized_learnings
+    if validate_df_not_empty(prioritized_learnings):
+        contextualized_learnings = add_contextualization(prioritized_learnings) 
+        logging.info("Contextualization of learnings completed.")   
+        return contextualized_learnings
+    else:
+        return prioritized_learnings
 
 
 def main(prioritized_learnings_path):
