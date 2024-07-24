@@ -8,6 +8,8 @@ import logging
 
 FORMAT_PROMPT_PRIMARY_PATH = "format_prompt.txt"
 FORMAT_PROMPT_SECONDARY_PATH = "format_prompt_secondary.txt"
+INSTRUCTION_PROMPT_PRIMARY_PATH = "instruction_prompt.txt"
+INSTRUCTION_PROMPT_SECONDARY_PATH = "instruction_prompt_secondary.txt"
 PROMPT_DATA_LENGTH_LIMIT = 5000
 ENCODING_NAME = "cl100k_base"
 
@@ -159,9 +161,9 @@ def build_intro_section():
     return "I will provide you with a set of instructions, data, and formatting requests in three sections. I will pass you the INSTRUCTIONS section, are you ready?"+ os.linesep + os.linesep
 
 
-def build_instruction_section(request_filter, df):
+def build_instruction_section(type_prompt, request_filter, df):
     """Builds the instruction section of the prompt based on the request filter and DataFrame."""
-    instructions = ['INSTRUCTIONS', '========================', 'Summarize essential insights from the DATA']
+    instructions = ['INSTRUCTIONS\n========================\nSummarize essential insights from the DATA']
 
     if 'appeal_code__dtype__in' in request_filter:
         dtypes = df['dtype_name'].dropna().unique()
@@ -188,11 +190,11 @@ def build_instruction_section(request_filter, df):
         component_str = '", "'.join(components)
         instructions.append(f'and "{component_str}" aspects')
 
-    instructions.append(
-        'in Emergency Response. You should prioritize the insights based on their recurrence and potential impact on humanitarian operations, and provide the top insights. \n\nI will pass you the DATA section, are you ready?\n\n'
-    )
+    instructions.append('in Emergency Response.')
+    instructions.append('\n\n' + get_instruction(type_prompt))
+    instructions.append('\n\nI will pass you the DATA section, are you ready?\n\n')
 
-    return '\n'.join(instructions)
+    return ' '.join(instructions)
 
 
 def build_data_section(type_prompt, df):
@@ -200,6 +202,21 @@ def build_data_section(type_prompt, df):
     try:
         learnings_data = process_data(type_prompt,df)
         return f'DATA\n========================\n{learnings_data}\n\nI will pass you the FORMAT section, are you ready?\n\n'
+    except Exception as e:
+        logging.error(f"Error in generating summaries: {e}")
+        raise
+
+def get_instruction(type_prompt):
+    """Reads the instruction from a text file."""
+    try:
+        if (type_prompt == "primary"):
+            content= read_file(INSTRUCTION_PROMPT_PRIMARY_PATH)
+            return content
+        elif (type_prompt == "secondary"):
+            content= read_file(INSTRUCTION_PROMPT_SECONDARY_PATH)
+            return content
+        else:
+            logging.error("Type of prompt is not valid. Type has to be either primary or secondary.")
     except Exception as e:
         logging.error(f"Error in generating summaries: {e}")
         raise
@@ -233,7 +250,7 @@ def format_prompt(request_filter_path, prioritized_learnings, type_prompt):
         request_filter = process_request_filter(request_filter)
 
         prompt_intro = build_intro_section()
-        prompt_instruction = build_instruction_section(request_filter, prioritized_learnings)
+        prompt_instruction = build_instruction_section(type_prompt,request_filter, prioritized_learnings)
         prompt_data = build_data_section(type_prompt, prioritized_learnings)
         prompt_format = get_format_section(type_prompt)
 
