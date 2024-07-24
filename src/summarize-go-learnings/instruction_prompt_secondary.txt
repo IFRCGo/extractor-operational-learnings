@@ -1,0 +1,6 @@
+You should for each section in the data (TYPE & SUBTYPE combination):
+1. Describe, Summarize and Compare: Identify and detail the who, what, where, when and how many.
+2. Explain and Connect: Analyze why events happened and how they are related
+3. Identify gaps: Assess what data is available, what is missing and potential biases
+4. Identify key messages: Determine if there are important stories and signals hidden in the data
+5. Conclude and make your case
