@@ -1,7 +1,7 @@
 import pandas as pd
 import tiktoken
 import sys
-from itertools import chain
+from itertools import chain, zip_longest
 import logging
 
 
@@ -26,7 +26,7 @@ def remove_duplicates(df, type_prompt):
     if type_prompt == 'primary':
         return df.drop_duplicates(subset='learning')
     elif type_prompt == 'secondary':
-        return df.drop_duplicates(subset=['learning','component'])
+        return df.drop_duplicates(subset=['learning','component','sector'])
     else:
         logging.error('Type of prompt is not valid. Type has to be either primary or secondary.')
         return None
@@ -49,12 +49,13 @@ def sort_excerpts(df, type_prompt):
         grouped = df_sorted.groupby('component')
 
         # Create an interleaved list of rows
-        interleaved = list(chain(*zip(*[group[1].itertuples(index=False) for group in grouped])))
-
+        interleaved = list(chain(*zip_longest(*[group[1].itertuples(index=False) for group in grouped],fillvalue=None)))
+        
         # Convert the interleaved list of rows back to a DataFrame
         result = pd.DataFrame(interleaved)
-        result.reset_index(inplace = True, drop = True)
-        return result
+        result_filtered = result[pd.notna(result['component'])]
+        result_filtered.reset_index(inplace = True, drop = True)
+        return result_filtered
     else:
         logging.error('Type of prompt is not valid. Type has to be either primary or secondary.')
         return None
@@ -85,7 +86,7 @@ def prioritize_most_recent(df, type_prompt, limit=2000, encoding_name="cl100k_ba
     return slice_dataframe(df, limit, encoding_name)
     
 
-def prioritize_excerpts(contextualized_learnings, type_prompt):     
+def prioritize_excerpts(contextualized_learnings, type_prompt):  
     """Main function to prioritize excerpts.""" 
     if validate_df_not_empty(contextualized_learnings):
         prioritized_excerpts_learnings = prioritize_most_recent(
