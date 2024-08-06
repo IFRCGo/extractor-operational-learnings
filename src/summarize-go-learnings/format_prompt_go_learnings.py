@@ -159,7 +159,7 @@ def process_data(type_prompt, df):
 
 def build_intro_section():
     """Builds the introductory section of the prompt."""
-    return "I will provide you with a set of instructions, data, and formatting requests in three sections. I will pass you the INSTRUCTIONS section, are you ready?"+ os.linesep + os.linesep
+    return "I will provide you with a set of instructions, data, and formatting requests in three sections. I will pass you the INSTRUCTIONS section, are you ready?"+ "\n\n\n\n"
 
 
 def build_instruction_section(type_prompt, request_filter, df):
@@ -193,7 +193,7 @@ def build_instruction_section(type_prompt, request_filter, df):
 
     instructions.append('in Emergency Response.')
     instructions.append('\n\n' + get_instruction(type_prompt))
-    instructions.append('\n\nI will pass you the DATA section, are you ready?\n\n')
+    instructions.append('\n\nI will pass you the DATA section, are you ready?\n\n\n\n')
 
     return ' '.join(instructions)
 
@@ -203,7 +203,7 @@ def build_data_section(type_prompt, df):
 
     try:
         learnings_data = process_data(type_prompt,df)
-        return f'DATA\n========================\n{learnings_data}\n\nI will pass you the FORMAT section, are you ready?\n\n'
+        return f'DATA\n========================\n{learnings_data}\n\nI will pass you the FORMAT section, are you ready?\n\n\n\n'
     except Exception as e:
         logging.error(f"Error in generating summaries: {e}")
         raise
@@ -241,7 +241,7 @@ def get_format_section(type_prompt):
 
 def create_prompt(prompt_intro, prompt_instruction, prompt_data, prompt_format):
     """Combines all sections to create the full prompt."""
-    
+
     return ''.join([prompt_intro, prompt_instruction, prompt_data, prompt_format])
 
 
