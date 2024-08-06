@@ -115,21 +115,22 @@ def get_learnings_component(component, df):
 
 
 def process_learnings_sector(sector,df, max_length_per_section):
-    df = get_learnings_sector(sector, df).dropna()
-    df_sliced = slice_dataframe(df, max_length_per_section, ENCODING_NAME)
-    learnings_sector = '\n----------------\n\n'+"TYPE: sector, "+"SUBTYPE: " + sector.lower() +'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
+    df_sector = get_learnings_sector(sector, df).dropna(subset='learning')
+    df_sector_sliced = slice_dataframe(df_sector, max_length_per_section, ENCODING_NAME)
+    learnings_sector = '\n----------------\n\n'+"TYPE: sector, "+"SUBTYPE: " + sector.lower() +'\n----------------\n'+'\n----------------\n'.join(df_sector_sliced['learning'])
     return learnings_sector
 
 
 def process_learnings_component(component,df, max_length_per_section):
-    df = get_learnings_component(component, df).dropna()
-    df_sliced = slice_dataframe(df, max_length_per_section, ENCODING_NAME)
-    learnings_component = '\n----------------\n\n'+"TYPE: component, "+"SUBTYPE: " + component.lower() +'\n----------------\n'+'\n----------------\n'.join(df_sliced['learning'])
+    df_component = get_learnings_component(component, df).dropna(subset='learning')
+    df_component_sliced = slice_dataframe(df_component, max_length_per_section, ENCODING_NAME)
+    learnings_component = '\n----------------\n\n'+"TYPE: component, "+"SUBTYPE: " + component.lower() +'\n----------------\n'+'\n----------------\n'.join(df_component_sliced['learning'])
     return learnings_component
 
 
 def process_data(type_prompt, df):
     """Process learnings from DataFrame according to type of summary"""
+
     if (type_prompt == "primary"):
         learnings_data = '\n----------------\n'.join(df['learning'].dropna())
         return learnings_data
@@ -199,6 +200,7 @@ def build_instruction_section(type_prompt, request_filter, df):
 
 def build_data_section(type_prompt, df):
     """Builds the data section of the prompt from the DataFrame."""
+
     try:
         learnings_data = process_data(type_prompt,df)
         return f'DATA\n========================\n{learnings_data}\n\nI will pass you the FORMAT section, are you ready?\n\n'
@@ -239,6 +241,7 @@ def get_format_section(type_prompt):
 
 def create_prompt(prompt_intro, prompt_instruction, prompt_data, prompt_format):
     """Combines all sections to create the full prompt."""
+    
     return ''.join([prompt_intro, prompt_instruction, prompt_data, prompt_format])
 
 
