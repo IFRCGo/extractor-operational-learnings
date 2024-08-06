@@ -25,23 +25,23 @@ def summarize(request_filter_path, primary_output_file_path, secondary_output_fi
         # generate_prioritization_list("../../../../../data/go/go_authorization_token.json", "list_components_countries.json", "list_components_regions.json", "list_components_global.json")
         # logging.info("Prioritized components lists generated.")
 
+        contextualized_learnings = contextualize(filtered_learnings)
+        logging.info("Contextualized the learnings.")
+
         prioritized_components_learnings = prioritize_components(
-            filtered_learnings, 
+            contextualized_learnings, 
             "list_components_countries.json", 
             "list_components_regions.json", 
             "list_components_global.json"
         )
-        logging.info("Prioritized components learnings.")
-
-        contextualized_learnings = contextualize(prioritized_components_learnings)
-        logging.info("Contextualized the learnings.")
-
-        prioritized_learnings = prioritize_excerpts(contextualized_learnings,"primary")
+        logging.info("Prioritized components learnings.")        
+        
+        prioritized_learnings = prioritize_excerpts(prioritized_components_learnings,"primary")
         logging.info("Prioritized excerpts from learnings for primary summary.")
 
         primary_prompt = format_prompt(request_filter_path, prioritized_learnings,"primary")
         logging.info("Formatted the prompt for primary summary.")
-
+        
         generate_summaries(primary_prompt, primary_output_file_path)
         logging.info("Generated the primary summary.")
 
@@ -53,6 +53,7 @@ def summarize(request_filter_path, primary_output_file_path, secondary_output_fi
 
         secondary_prompt = format_prompt(request_filter_path, prioritized_learnings,"secondary")
         logging.info("Formatted the prompt for secondary summary.")
+
 
         generate_summaries(secondary_prompt, secondary_output_file_path)
         logging.info("Generated the secondary summary.")
