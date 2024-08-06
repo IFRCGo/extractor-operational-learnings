@@ -64,18 +64,18 @@ def sort_excerpts(df, type_prompt):
 def slice_dataframe(df, limit, encoding_name):
     df['count_temp'] = [count_tokens(x,encoding_name) for x in df['learning']]
     df['cumsum'] = df['count_temp'].cumsum()
-
-    slice_index = None
-    for i in range(1, len(df)):
-        if df['cumsum'].iloc[i-1] <= limit and df['cumsum'].iloc[i] > limit:
-            slice_index = i-1
-            break
-
-    if slice_index is not None:
-        df_sliced = df.iloc[:slice_index+1]
-                
+    
+    if limit < df['cumsum'].iloc[-1]:
+        slice_index = None
+        for i in range(1, len(df)):
+            if df['cumsum'].iloc[i-1] <= limit and df['cumsum'].iloc[i] > limit:
+                slice_index = i-1
+                break
+    
+        if slice_index is not None:        
+            df_sliced = df.iloc[:slice_index+1]
     else:
-        df_sliced = df    
+            df_sliced = df    
     return df_sliced
 
 
