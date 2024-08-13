@@ -83,6 +83,7 @@ def query(request_filter_path):
         df = fetch_filtered_learnings_csvexport(request_filter)
 
         if validate_df_not_empty(df):
+            df['excerpts_id'] = [str(x) for x in df['id']]
             df.set_index('id', inplace=True)
             logging.info("Data successfully fetched and returned as DataFrame.")
         return df
