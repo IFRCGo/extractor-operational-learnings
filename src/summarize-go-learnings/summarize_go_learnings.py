@@ -35,34 +35,37 @@ def summarize(request_filter_path, primary_output_file_path, secondary_output_fi
             "list_components_global.json"
         )
         logging.info("Prioritized components learnings.")        
-        
-        prioritized_learnings = prioritize_excerpts(prioritized_components_learnings,"primary")
+
+        primary_prioritized_learnings = prioritize_excerpts(prioritized_components_learnings,"primary")
         logging.info("Prioritized excerpts from learnings for primary summary.")
 
-        primary_prompt = format_prompt(request_filter_path, prioritized_learnings,"primary")
+        primary_prompt = format_prompt(request_filter_path, primary_prioritized_learnings,"primary")
         logging.info("Formatted the prompt for primary summary.")
-        
+        logging.info(primary_prompt)
+
         generate_summaries(primary_prompt, primary_output_file_path)
         logging.info("Generated the primary summary.")
 
-        process_summary(primary_output_file_path,"primary",3)
+        process_summary(primary_output_file_path,"primary", 3)
         logging.info("Finalized processing primary summary.")
+        logging.info("%s learnings retrieved, %s learnings prioritized.", len(filtered_learnings),len(primary_prioritized_learnings))
 
-        prioritized_learnings = prioritize_excerpts(contextualized_learnings,"secondary")
+        secondary_prioritized_learnings = prioritize_excerpts(contextualized_learnings,"secondary")
         logging.info("Prioritized excerpts from learnings for secondary summary.")
 
-        secondary_prompt = format_prompt(request_filter_path, prioritized_learnings,"secondary")
+        secondary_prompt = format_prompt(request_filter_path, secondary_prioritized_learnings,"secondary")
         logging.info("Formatted the prompt for secondary summary.")
-
+        logging.info(secondary_prompt)
 
         generate_summaries(secondary_prompt, secondary_output_file_path)
         logging.info("Generated the secondary summary.")
 
         process_summary(secondary_output_file_path,"secondary",3)
         logging.info("Finalized processing secondary summary.")
+        logging.info("%s learnings retrieved, %s learnings prioritized.", len(filtered_learnings),len(secondary_prioritized_learnings))
 
-        logging.info("Summarization process completed in %s seconds.", time.time() - start_time)
-        logging.info("%s learnings retrieved, %s learnings prioritized.", len(filtered_learnings),len(prioritized_learnings))
+        logging.info("Complete summarization process done in %s seconds.", time.time() - start_time)
+
         
     except Exception as e:
         logging.error("An error occurred during the summarization process: %s", e)
