@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from generate_summaries_go_learnings import generate_summaries
 
 def read_json_file(file_path):
@@ -33,7 +34,7 @@ def validate_dict_not_empty(dct):
         return False
     else:
         return True
-    
+
 def modify_summary(summary, type_summary):
     try:
         if type_summary == "primary":
@@ -41,9 +42,9 @@ def modify_summary(summary, type_summary):
                 if key != "contradictory reports":
                     if isinstance(value, dict):
                         if "confidence level" not in value:
-                            if value["content"].endswith("."):
+                            if value["content"].endswith("/5."):
                                 value["confidence level"] = value["content"][-4:-1] 
-                            else:
+                            elif(value["content"].endswith("/5")):
                                 value["confidence level"] = value["content"][-3:] 
         return summary
     except Exception as e:
@@ -59,11 +60,13 @@ def validate_summary(summary, type_summary):
             return False
 
         if (type_summary == "primary"):
-            #main bug found in responses
             for key, value in summary.items():
                 if key != "contradictory reports":
                     if "confidence level" not in value:
                         logging.info("Summary doesn't explicitly state confidence level ")
+                        return False
+                    if "excerpts id" not in value:
+                        logging.info("Summary doesn't explicitly state excerpts")
                         return False
                     if not isinstance(value, dict):
                         logging.info("Each entry of the summaries doesn't have the expected structure")
