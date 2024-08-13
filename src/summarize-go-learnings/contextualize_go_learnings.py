@@ -19,7 +19,7 @@ def contextualize(prioritized_learnings):
     def add_contextualization(df):
         """Adds appeal year and event name as a contextualization of the leannings."""
         for index, row in df.iterrows():
-            df.at[index, 'learning'] = f"In {row['appeal_year']} in {row['appeal_name']}: {row['learning']}"
+            df.at[index, 'learning'] = f"{row['excerpts_id']}. In {row['appeal_year']} in {row['appeal_name']}: {row['learning']}"
 
         df = df.drop(columns=['appeal_name'])
         logging.info("Contextualization added to DataFrame.")
