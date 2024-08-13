@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import sys
 import logging
 from query_go_learnings import query
@@ -17,7 +18,10 @@ def summarize(request_filter_path, primary_output_file_path, secondary_output_fi
     
     try:
         logging.info("Starting the summarization process.")
-        
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        logging.info("Starting the summarization process on %s.", dt_string)
+
         filtered_learnings = query(request_filter_path)
         logging.info("Queried and filtered learnings.")
 
