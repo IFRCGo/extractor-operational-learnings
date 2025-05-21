@@ -152,7 +152,7 @@ def tag_data(df, tagging, tagging_api_endpoint):
         if (response.status_code==201) and len(response.json()[0]['tags']) > 0:
             df.loc[i, tagging] = response.json()[0]['tags'][0]
     
-    df['Institution'] = np.empty(len(df))
+    df['Institution'] = ""
     
     for i in range(0,len(df)):
         if (df['PER - Component'].iloc[i] == 'Activation of Regional and International Support'):
@@ -164,8 +164,8 @@ def tag_data(df, tagging, tagging_api_endpoint):
     return tagged_data
 
 
-def fetch_complementary_data(per_formcomponent, primary_sector):
-    logging.info('Fetching complementary data on PER components ids, sectors ids, finding ids, organisations ids')
+def fetch_complementary_data(per_formcomponent, primary_sector, appeal_document):
+    logging.info('Fetching complementary data on PER components ids, sectors ids, finding ids, organisations ids, appeal document ids')
     def fetchUrl(field):
         return requests.get(field).json()
 
@@ -177,14 +177,34 @@ def fetch_complementary_data(per_formcomponent, primary_sector):
             temp_dict = fetchUrl(temp_dict['next'])
         dict_field.extend(temp_dict['results'])
         return pd.DataFrame.from_dict(dict_field)
-
+        
     per_formcomponent = fetchField(per_formcomponent)
-    
+
+    appeal_document = fetchField(appeal_document)
+
     go_sectors =  fetchUrl(GO_API_URL+primary_sector)
     
     dict_per = dict(zip(per_formcomponent['title'],per_formcomponent['id']))
     
     dict_sector = {item['label']: item['key'] for item in go_sectors}
+
+    appeal_document.loc[:,'appeal_code'] = pd.Series(dtype="object")
+    appeal_document.loc[:,'appeal_code'] = [x['code'] if pd.notna(x) else None for x in appeal_document['appeal']]
+
+    appeal_document['name'] = appeal_document['name'].fillna('').str.lower()
+    appeal_document['type'] = appeal_document['type'].fillna('').str.lower()
+
+    mask = (
+        ((appeal_document['name'].str.contains('final')) | (appeal_document['type'].str.contains('final'))) &
+        (~appeal_document['name'].str.contains('prelim')) &
+        (~appeal_document['type'].str.contains('prelim'))
+    )
+
+    appeal_document_filtered = appeal_document[mask]
+
+    appeal_document_filtered = appeal_document_filtered.sort_values('created_at', ascending=False).groupby('appeal_code', as_index=False).first()
+    
+    dict_appeal_doc = dict(zip(appeal_document_filtered['appeal_code'],appeal_document_filtered['id']))
     
     dict_finding = {
         'Lessons Learnt': 1,  
@@ -215,9 +235,9 @@ def fetch_complementary_data(per_formcomponent, primary_sector):
     "Hazard, Context and Risk Analysis, Monitoring and Early Warning": "Hazard, Context and Risk Analysis, Monitoring and Early Warning",
     "Information and Communication Technology (ICT)": "Information and Communication Technology (ICT)",
     "Information Management": "Information Management (IM)",
-    "Logistics - Logistics Management": "LOGISTICS MANAGEMENT",
-    "Logistics - Procurement": "PROCUREMENT",
-    "Logistics - Warehouse and Stock Management": "WAREHOUSE AND STOCK MANAGEMENT",
+    "Logistics - Logistics Management": "Logistics, procurement and supply chain",
+    "Logistics - Procurement": "Logistics, procurement and supply chain",
+    "Logistics - Warehouse and Stock Management": "Logistics, procurement and supply chain",
     "Mapping of NS Capacities": "Mapping of NS capacities",
     "NS Specific Areas of Intervention": "NS-specific areas of intervention",
     "Operations Monitoring, Evaluation, Reporting and Learning": "Operations Monitoring, Evaluation, Reporting and Learning",
@@ -233,15 +253,15 @@ def fetch_complementary_data(per_formcomponent, primary_sector):
     "Testing and Learning": "Testing and Learning",
     "Cooperation with Private Sector": "Cooperation with private sector",
     "Disaster Risk Management Strategy": "DRM Strategy",
-    "Logistics - Supply Chain Management": "SUPPLY CHAIN MANAGEMENT",
-    "Logistics - Transportation Management": "FLEET AND TRANSPORTATION MANAGEMENT",
+    "Logistics - Supply Chain Management": "Logistics, procurement and supply chain",
+    "Logistics - Transportation Management": "Logistics, procurement and supply chain",
     "Scenario Planning": "Scenario planning",
     "Civil Military Relations": "Civil Military Relations",
     "Disaster Risk Management Policy": "DRM Policy",
     "information and Communication Technology (ICT)": "Information and Communication Technology (ICT)",
     "Coordination with local community level responders": "Coordination with local community level responders",
     "Emergency Response Procedures (SOPs)": "Emergency Response Procedures (SOPs)",
-    "Logistics - Transport": "FLEET AND TRANSPORTATION MANAGEMENT",
+    "Logistics - Transport": "Logistics, procurement and supply chain",
     "Unknown": None,
     "Business continuity": "Business continuity",
     "emergency Response Procedures (SOP)": "Emergency Response Procedures (SOPs)",
@@ -249,7 +269,7 @@ def fetch_complementary_data(per_formcomponent, primary_sector):
     }
     
     mapping_sector = {
-    "Strategies for implementation": None,  # No direct match found
+    "Strategies for implementation": None,  # No direct match found # no sector(?)
     "Disaster Risk Reduction and Climate Action": "DRR",
     "Health": "Health (public)",
     "Livelihoods and Basic Needs": "Livelihoods and basic needs",
@@ -275,25 +295,38 @@ def fetch_complementary_data(per_formcomponent, primary_sector):
     "Coordination And Partnerships":"NS Strengthening"}
     
     
-    return mapping_per, dict_per, mapping_sector, dict_sector, dict_org, dict_finding
+    return mapping_per, dict_per, mapping_sector, dict_sector, dict_org, dict_finding, dict_appeal_doc
     
-def format_data(df, mapping_per, dict_per, mapping_sector, dict_sector,dict_org, dict_finding):
+def format_data(df, mapping_per, dict_per, mapping_sector, dict_sector,dict_org, dict_finding, dict_appeal_doc):
     logging.info('Formatting data to upload to GO Operational Learning Table')
+    df.loc[:,'mapped_per'] = pd.Series(dtype="object")
+    df.loc[:,'id_per'] = pd.Series(dtype="object")
+    df.loc[:,'mapped_sector'] = pd.Series(dtype="object")
+    df.loc[:,'id_sector'] = pd.Series(dtype="object")
+    df.loc[:,'id_institution'] =  pd.Series(dtype="object")
+    df.loc[:,'id_finding'] = pd.Series(dtype="object")
+    df.loc[:,'appeal_document_id'] = pd.Series(dtype="object")
+    
     df.loc[:,'mapped_per'] = [mapping_per[x] if pd.notna(x) else None for x in df['PER - Component']]
     df.loc[:,'id_per'] = [dict_per[x] if pd.notna(x) else None for x in df['mapped_per']]
     df.loc[:,'mapped_sector'] = [mapping_sector[x] if pd.notna(x) else None for x in df['Sector']]
     df.loc[:,'id_sector'] = [dict_sector[x] if pd.notna(x) else None for x in df['mapped_sector']]
     df.loc[:,'id_institution'] =  [dict_org[x] for x in df['Institution']]
     df.loc[:,'id_finding'] = [dict_finding[x] for x in df['Finding']]
+
+    #filter to only reports that have been published and available in appeal_document
+    mask = [x in dict_appeal_doc.keys() for x in df['appeal_code']]
+    df = df[mask]
+    df.loc[:,'appeal_document_id'] = [dict_appeal_doc[x] for x in df['appeal_code']]
     
-    formatted_data = df[['appeal_code', 'Excerpts', 'id_per','id_sector','id_institution','id_finding']]
+    formatted_data = df[['appeal_code', 'Excerpts', 'id_per','id_sector','id_institution','id_finding','appeal_document_id']]
     
     return formatted_data
 
 
 def manage_duplicates(df):
     logging.info('Managing duplicates')
-    df = df.groupby(['appeal_code','Excerpts','id_finding'], as_index = False).agg(list).reset_index()
+    df = df.groupby(['appeal_code','appeal_document_id','Excerpts','id_finding'], as_index = False).agg(list).reset_index()
     df.drop(columns = ['index'], inplace = True)
     
     df['id_per'] = [list(set([y for y in x if pd.notna(y)])) for x in df['id_per']]
@@ -324,6 +357,7 @@ def post_to_api(df, api_post_endpoint, go_auth_token_path):
                     "per_component_validated": df['id_per'].iloc[i],
                     "organization": df['id_institution'].iloc[i],
                     "organization_validated": df['id_institution'].iloc[i],
+                    "appeal_document_id": df['appeal_document_id'].iloc[i],
                     "is_validated": False
                    }
         
@@ -363,8 +397,8 @@ def main(go_auth_token_path):
             tagged_data = tag_data(split_learnings,'PER - Component' , CLASSIFY_URL)
 
             # Step 4: Post Processing
-            mapping_per, dict_per, mapping_sector, dict_sector, dict_org, dict_finding = fetch_complementary_data('per-formcomponent', 'primarysector')
-            formatted_data = format_data(tagged_data,mapping_per, dict_per, mapping_sector, dict_sector,dict_org, dict_finding)
+            mapping_per, dict_per, mapping_sector, dict_sector, dict_org, dict_finding, dict_appeal_doc = fetch_complementary_data('per-formcomponent', 'primarysector','appeal_document')
+            formatted_data = format_data(tagged_data,mapping_per, dict_per, mapping_sector, dict_sector,dict_org, dict_finding, dict_appeal_doc)
             deduplicated_data = manage_duplicates(formatted_data)
     
             # Step 5: Post to API Endpoint
